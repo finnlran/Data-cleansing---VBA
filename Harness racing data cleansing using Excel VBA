@@ -1,0 +1,141 @@
+Sub Basic_Format()
+
+    Dim ws1 As Worksheet
+    Dim row As Range
+
+    Set ws1 = ActiveSheet
+    
+    ws1.Cells.Interior.ColorIndex = xlNone
+    ws1.Cells.UnMerge
+    Columns("G:H").EntireColumn.Delete
+    
+    'Trim the entire sheet
+    Dim cell As Range
+    For Each cell In ws1.UsedRange.SpecialCells(xlCellTypeConstants)
+    cell = WorksheetFunction.Trim(cell)
+    Next cell
+    
+    'For each loop to move the descriptions of each horse to a new column
+    For Each row In ws1.Range("A1:M1000").Rows
+    
+      If Application.CountA(row) = 1 And row.Cells(3).Value <> "" Then
+
+        With row.Cells(3)
+            row.Cells(6).Offset(-1, 0).Value = .Value
+            row.ClearContents
+        End With
+    
+      End If
+      
+      'Delete the blank rows
+      If Application.CountA(row) = 0 Then row.Delete
+      
+    Next row
+End Sub
+    
+Sub Remove_Irrelavant_Rows()
+
+    Dim ws1 As Worksheet
+    Dim row As Range
+
+    Set ws1 = ActiveSheet
+    
+     'Delete irrelavant rows
+     'When deleting entire rows, you need to work through your range backwards (from the bottom to top) to not miss any rows.
+     For r = ws1.Range("A1:M1000").Rows.Count To 1 Step -1
+            If Application.CountA(Rows(r)) < 7 Then Rows(r).EntireRow.Delete
+     Next
+     
+End Sub
+
+Sub FinalFormat()
+
+    Dim ws1 As Worksheet
+    Dim row As Range
+    Dim headers() As Variant
+    
+    'Remove redundant headers
+    Set ws1 = ActiveSheet
+     For I = ws1.Range("A1:M1000").Rows.Count To 2 Step -1
+            If Cells(I, 1).Font.Bold = True Then Rows(I).EntireRow.Delete
+     Next
+     
+    'Insert three blank columns to the very left for further information
+    ws1.Columns("A:C").Insert shift:=xlRight
+    
+    'turn this off for the macro to run a little faster
+    Application.ScreenUpdating = False
+
+    Set wb = ActiveWorkbook
+
+    headers() = Array("RacingClub", "Date", "Race No", "Plc", "Bk", "Horse", _
+    "Barrier", "Hcap", "Description", "Driver", "Trainer", "Time", "Margin", _
+    "Rank", "SS", "Comment")
+    
+    'Update the Headers
+    With ws1
+    .Rows(1).Value = ""  'This will clear out row 1
+    For I = LBound(headers()) To UBound(headers())
+        .Cells(1, 1 + I).Value = headers(I)
+    Next I
+    
+    .Rows(1).Font.Bold = True
+    
+    End With
+
+    'Change the font of the entire sheet
+    With ws1.Cells.Font
+     .Name = "Arial"
+     .FontStyle = "Regular"
+     .Size = 10
+     .Strikethrough = False
+     .Superscript = False
+     .Subscript = False
+     .OutlineFont = False
+     .Shadow = False
+     .Underline = xlUnderlineStyleNone
+     .ColorIndex = xlAutomatic
+     .TintAndShade = 0
+     .ThemeFont = xlThemeFontNone
+    End With
+    
+    'Make header bold and Make culumns autofit
+    ws1.Rows(1).Font.Bold = True
+    
+    ws1.Columns("A:P").WrapText = False
+
+    ws1.Columns("I").ColumnWidth = 70
+    ws1.Columns("I").Font.Italic = True
+    ws1.Columns("A:H").AutoFit
+    ws1.Columns("J:P").AutoFit
+    
+    ws1.Columns("I").WrapText = True
+    ws1.Rows("1:1000").AutoFit
+    
+    
+    Application.ScreenUpdating = True 'turn it back on
+
+
+End Sub
+
+Sub Worksheets_Loop()
+
+         Dim WS_Count As Integer
+         Dim I As Integer
+
+         ' Declare Current as a worksheet object variable.
+         Dim Current As Worksheet
+
+         ' Loop through all of the worksheets in the active workbook.
+         For Each Current In Worksheets
+
+            Current.Activate
+            Call Basic_Format
+            Call Remove_Irrelavant_Rows
+            Call FinalFormat
+            
+         Next
+         
+         MsgBox ("You are great! I love you!")
+
+End Sub
